@@ -207,7 +207,7 @@ jobs:
           use-installer: true
       - uses: actions/download-artifact@v3
         with:
-          name: packaged-testing.yaml
+          name: packaged-qa.yaml
 
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
