@@ -55,7 +55,22 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
 
 Resources:
 
+  DynamoDBTables:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: k8-backend/nested-templates/tables.yaml
 
+  Cognito:
+    Type: AWS::Serverless::Application
+    DependsOn: UserInterface
+    Properties:
+      Location: k8-backend/nested-templates/cognito.yaml
+      Parameters:
+        AdminEmailParameter: !Ref AdminEmailParameter
+        SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
+        ApiKeyOperationUsersParameter: !Ref ApiKeyOperationUsersParameter
+        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
+        TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite }
 
 
 
