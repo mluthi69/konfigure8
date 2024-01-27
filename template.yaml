@@ -60,6 +60,18 @@ Resources:
     Properties:
       Location: k8-backend/nested-templates/tables.yaml
 
+  Cognito:
+    Type: AWS::Serverless::Application
+    DependsOn: UserInterface
+    Properties:
+      Location: nested_templates/bootstrap/cognito.yaml
+      Parameters:
+        AdminEmailParameter: !Ref AdminEmailParameter
+        SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
+        ApiKeyOperationUsersParameter: !Ref ApiKeyOperationUsersParameter
+        AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
+        TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite }
+
 
 
   HelloWorldFunction:
