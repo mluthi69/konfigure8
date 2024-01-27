@@ -62,7 +62,7 @@ Resources:
 
   Cognito:
     Type: AWS::Serverless::Application
-    DependsOn: UserInterface
+    #DependsOn: UserInterface
     Properties:
       Location: k8-backend/nested-templates/cognito.yaml
       Parameters:
@@ -71,8 +71,6 @@ Resources:
         ApiKeyOperationUsersParameter: !Ref ApiKeyOperationUsersParameter
         AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
         TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite }
-
-
 
   HelloWorldFunction:
     Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
