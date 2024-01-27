@@ -44,7 +44,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: |
           # trigger the tests here
 
@@ -52,7 +52,7 @@ jobs:
     if: startsWith(github.event.ref, 'feature') && github.event_name == 'delete'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
@@ -84,7 +84,7 @@ jobs:
     needs: [condition-check]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
@@ -114,7 +114,7 @@ jobs:
     needs: [condition-check]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
@@ -169,7 +169,7 @@ jobs:
     needs: [build-and-package]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
@@ -201,7 +201,7 @@ jobs:
     needs: [build-and-package]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
@@ -223,7 +223,7 @@ jobs:
           sam deploy --stack-name ${QA_STACK_NAME} \
             --template packaged-qa.yaml \
             --capabilities CAPABILITY_IAM \
-            --region ${QA_REGION:} \
+            --region ${QA_REGION} \
             --s3-bucket ${QA_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
             --role-arn ${QA_CLOUDFORMATION_EXECUTION_ROLE}
@@ -233,7 +233,7 @@ jobs:
     needs: [deploy-qa]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: |
           # trigger the integration tests here
 
@@ -245,7 +245,7 @@ jobs:
     # https://docs.github.com/en/actions/reference/environments
     # environment: <configured-environment>
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: aws-actions/setup-sam@v2
         with:
           use-installer: true
