@@ -1,10 +1,7 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: MIT-0
-
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Template to create dynamodb tables as part of bootstrap
+  Template to create dynamodb tables for saas control plane
 Resources:
   ServerlessSaaSSettingsTable:
     Type: AWS::DynamoDB::Table

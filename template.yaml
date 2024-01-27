@@ -1,10 +1,45 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  k8-backend
-
-  Powertools for AWS Lambda (Python) example
-
+  Konfigure8 SaaS Automation Platform
+Parameters:
+  AdminEmailParameter:
+    Type: String
+    Default: "matt.luthi@gmail.com"
+    Description: "Enter the System Administrator email address"
+  SystemAdminRoleNameParameter:
+    Type: String
+    Default: "SystemAdmin"
+    Description: "Enter the role name for the System Administrator"
+  ApiKeyOperationUsersParameter:
+    Type: String
+    Default: "4978c46c-aef0-4e57-9e0f-94cd33b45e22"
+    Description: "Enter default API key value to be used by API Gateway for System Administrators"
+  ApiKeyPlatinumTierParameter:
+    Type: String
+    Default: "989bb877-e514-4f50-b02e-3ae56a66b6c5"
+    Description: "Enter default API key value to be used by API Gateway for Platinum Tier Tenants"
+  ApiKeyPremiumTierParameter:
+    Type: String
+    Default: "f498a727-6d7a-4f86-b555-6b3342f3375b"
+    Description: "Enter default API key value to be used by API Gateway for Premium Tier Tenants"
+  ApiKeyStandardTierParameter:
+    Type: String
+    Default: "34c3423d-77d3-42fc-9630-d00f54a86dde"
+    Description: "Enter default API key value to be used by API Gateway for Standard Tier Tenants"
+  ApiKeyBasicTierParameter:
+    Type: String
+    Default: "c9298663-fcb0-4dce-ad9a-3f3900e2d816"
+    Description: "Enter default API key value to be used by API Gateway for Basic Tier Tenants"
+  StageName:
+    Type: String
+    Default: "prod"
+    Description: "Stage Name for the API"
+  LambdaCanaryDeploymentPreference:
+    Type: String
+    Default: "False"
+    Description: "Pass it as True if you want to enable the canary release for Lambda"
+  
 Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy-globals.html
   Function:
     Timeout: 5
@@ -17,7 +52,16 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
       LogFormat: JSON
   Api:
     TracingEnabled: true
+
 Resources:
+
+  DynamoDBTables:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: nested-templates/tables.yaml
+
+
+
   HelloWorldFunction:
     Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
