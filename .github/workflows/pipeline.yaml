@@ -143,6 +143,27 @@ jobs:
           name: packaged-testing.yaml
           path: packaged-testing.yaml
 
+      - name: Assume the qa pipeline user role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.QA_REGION }}
+          role-to-assume: ${{ env.QA_PIPELINE_EXECUTION_ROLE}}
+          role-session-name: qa-packaging
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Upload artifacts to qa artifact buckets
+        run: |
+          sam package \
+            --s3-bucket ${QA_ARTIFACTS_BUCKET} \
+            --region ${QA_REGION} \
+            --output-template-file packaged-qa.yaml
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: packaged-qa.yaml
+          path: packaged-qa.yaml
+
       - name: Assume the prod pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
         with:
