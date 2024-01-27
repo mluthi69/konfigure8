@@ -1,2 +1,2 @@
 # konfigure8
-Build anything platform
+testing various ideas...

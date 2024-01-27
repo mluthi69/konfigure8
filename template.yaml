@@ -22,7 +22,7 @@ Resources:
     Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
       Handler: app.lambda_handler
-      CodeUri: k8-backend/hello_world
+      CodeUri: k8-backend/lambda/hello_world
       Description: Hello World function
       Architectures:
       - x86_64
