@@ -81,7 +81,7 @@ jobs:
     # https://github.com/actions/setup-python
     # https://github.com/aws-actions/configure-aws-credentials#notice-node12-deprecation-warning
     if: startsWith(github.ref, 'refs/heads/feature')
-    needs: [test]
+    needs: [condition-check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
