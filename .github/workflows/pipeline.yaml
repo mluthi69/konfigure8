@@ -11,6 +11,7 @@ on:
 
 env:
   SAM_TEMPLATE: template.yaml
+  # DEV
   TESTING_STACK_NAME: konfigure8
   TESTING_PIPELINE_EXECUTION_ROLE: arn:aws:iam::654654497937:role/aws-sam-cli-managed-dev-pipel-PipelineExecutionRole-qAYPqpV4YOoF
   TESTING_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::654654497937:role/aws-sam-cli-managed-dev-p-CloudFormationExecutionRo-gb5HXsqKJxVy
@@ -20,21 +21,26 @@ env:
   # testing "sam package" and "sam deploy" commands.
   # TESTING_IMAGE_REPOSITORY = '0123456789.dkr.ecr.region.amazonaws.com/repository-name'
   TESTING_REGION: ap-southeast-2
+
+  # QA
+  QA_STACK_NAME: konfigure8
+  QA_PIPELINE_EXECUTION_ROLE: arn:aws:iam::891377224269:role/aws-sam-cli-managed-qa-pipeli-PipelineExecutionRole-cPEw6QQxS0Fw
+  QA_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::891377224269:role/aws-sam-cli-managed-qa-pi-CloudFormationExecutionRo-9yTlS2iUbkq8
+  QA_ARTIFACTS_BUCKET: aws-sam-cli-managed-qa-pipeline-re-artifactsbucket-kjiuwld7iykd
+  QA_REGION: ap-southeast-2
+
+  # PROD
   PROD_STACK_NAME: konfigure8
   PROD_PIPELINE_EXECUTION_ROLE: arn:aws:iam::654654315731:role/aws-sam-cli-managed-prod-pipe-PipelineExecutionRole-tkYvCq4BRtYx
   PROD_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::654654315731:role/aws-sam-cli-managed-prod--CloudFormationExecutionRo-95TLpEWUlbEQ
   PROD_ARTIFACTS_BUCKET: aws-sam-cli-managed-prod-pipeline--artifactsbucket-jybxttyc166m
-  # If there are functions with "Image" PackageType in your template,
-  # uncomment the line below and add "--image-repository ${PROD_IMAGE_REPOSITORY}" to
-  # prod "sam package" and "sam deploy" commands.
-  # PROD_IMAGE_REPOSITORY = '0123456789.dkr.ecr.region.amazonaws.com/repository-name'
   PROD_REGION: ap-southeast-2
 
 permissions:
   id-token: write
   contents: read
 jobs:
-  test:
+  condition-check:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -158,7 +164,7 @@ jobs:
           name: packaged-prod.yaml
           path: packaged-prod.yaml
 
-  deploy-testing:
+  deploy-dev:
     if: github.ref == 'refs/heads/main'
     needs: [build-and-package]
     runs-on: ubuntu-latest
@@ -190,9 +196,41 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
 
+  deploy-qa:
+    if: github.ref == 'refs/heads/main'
+    needs: [build-and-package]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      - uses: actions/download-artifact@v3
+        with:
+          name: packaged-testing.yaml
+
+      - name: Assume the testing pipeline user role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.QA_REGION }}
+          role-to-assume: ${{ env.QA_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: qa-deployment
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: Deploy to qa account
+        run: |
+          sam deploy --stack-name ${QA_STACK_NAME} \
+            --template packaged-qa.yaml \
+            --capabilities CAPABILITY_IAM \
+            --region ${QA_REGION:} \
+            --s3-bucket ${QA_ARTIFACTS_BUCKET} \
+            --no-fail-on-empty-changeset \
+            --role-arn ${QA_CLOUDFORMATION_EXECUTION_ROLE}
+
   integration-test:
     if: github.ref == 'refs/heads/main'
-    needs: [deploy-testing]
+    needs: [deploy-qa]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
