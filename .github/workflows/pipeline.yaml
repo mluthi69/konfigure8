@@ -138,7 +138,7 @@ jobs:
             --region ${TESTING_REGION} \
             --output-template-file packaged-testing.yaml
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: packaged-testing.yaml
           path: packaged-testing.yaml
@@ -159,7 +159,7 @@ jobs:
             --region ${QA_REGION} \
             --output-template-file packaged-qa.yaml
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: packaged-qa.yaml
           path: packaged-qa.yaml
@@ -180,7 +180,7 @@ jobs:
             --region ${PROD_REGION} \
             --output-template-file packaged-prod.yaml
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: packaged-prod.yaml
           path: packaged-prod.yaml
