@@ -58,7 +58,7 @@ Resources:
   DynamoDBTables:
     Type: AWS::Serverless::Application
     Properties:
-      Location: nested-templates/tables.yaml
+      Location: k8-backend/nested-templates/tables.yaml
 
 
 
