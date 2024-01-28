@@ -125,7 +125,7 @@ jobs:
       # install dependencies for k8-frontend
       - name: run npm install on admin frontent
         run: |
-          cd /home/runner/work/konfigure8/konfigure8/k8-frontend/admin
+          cd /k8-frontend/admin
           bahmutov/npm-install@v1
 
       - name: Build resources
