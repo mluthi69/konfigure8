@@ -119,6 +119,15 @@ jobs:
         with:
           use-installer: true
 
+      - name: Setup Node
+        uses: actions/setup-node@v3
+
+      # install dependencies for k8-frontend
+      - name: run npm install on admin frontent
+        run: |
+          cd /home/runner/work/konfigure8/konfigure8/k8-frontend/admin
+          bahmutov/npm-install@v1
+
       - name: Build resources
         run: sam build --template ${SAM_TEMPLATE} --use-container
 
