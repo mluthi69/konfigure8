@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Konfigure8 SaaS Automation Platform
+
+  '
+Parameters:
+  AdminEmailParameter:
+    Type: String
+    Default: matt.luthi@gmail.com
+    Description: Enter the System Administrator email address
+  SystemAdminRoleNameParameter:
+    Type: String
+    Default: SystemAdmin
+    Description: Enter the role name for the System Administrator
+  ApiKeyOperationUsersParameter:
+    Type: String
+    Default: 4978c46c-aef0-4e57-9e0f-94cd33b45e22
+    Description: Enter default API key value to be used by API Gateway for System
+      Administrators
+  ApiKeyPlatinumTierParameter:
+    Type: String
+    Default: 989bb877-e514-4f50-b02e-3ae56a66b6c5
+    Description: Enter default API key value to be used by API Gateway for Platinum
+      Tier Tenants
+  ApiKeyPremiumTierParameter:
+    Type: String
+    Default: f498a727-6d7a-4f86-b555-6b3342f3375b
+    Description: Enter default API key value to be used by API Gateway for Premium
+      Tier Tenants
+  ApiKeyStandardTierParameter:
+    Type: String
+    Default: 34c3423d-77d3-42fc-9630-d00f54a86dde
+    Description: Enter default API key value to be used by API Gateway for Standard
+      Tier Tenants
+  ApiKeyBasicTierParameter:
+    Type: String
+    Default: c9298663-fcb0-4dce-ad9a-3f3900e2d816
+    Description: Enter default API key value to be used by API Gateway for Basic Tier
+      Tenants
+  StageName:
+    Type: String
+    Default: prod
+    Description: Stage Name for the API
+  LambdaCanaryDeploymentPreference:
+    Type: String
+    Default: 'False'
+    Description: Pass it as True if you want to enable the canary release for Lambda
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 128
+    Runtime: python3.10
+    Tracing: Active
+    LoggingConfig:
+      LogFormat: JSON
+  Api:
+    TracingEnabled: true
+Resources:
+  DynamoDBTables:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: https://s3.ap-southeast-2.amazonaws.com/aws-sam-cli-managed-dev-pipeline-r-artifactsbucket-sqvgljkyuxsp/ef09fd12efb5b75b367c19e5af287789.template
+    Metadata:
+      SamResourceId: DynamoDBTables
+  Cognito:
+    Type: AWS::Serverless::Application
+    DependsOn: UserInterface
+    Properties:
+      Location: https://s3.ap-southeast-2.amazonaws.com/aws-sam-cli-managed-dev-pipeline-r-artifactsbucket-sqvgljkyuxsp/d664427372eeebb5a181e17f1d649cd8.template
+      Parameters:
+        AdminEmailParameter:
+          Ref: AdminEmailParameter
+        SystemAdminRoleNameParameter:
+          Ref: SystemAdminRoleNameParameter
+        ApiKeyOperationUsersParameter:
+          Ref: ApiKeyOperationUsersParameter
+        AdminUserPoolCallbackURLParameter:
+          Fn::GetAtt:
+          - UserInterface
+          - Outputs.AdminAppSite
+        TenantUserPoolCallbackURLParameter:
+          Fn::GetAtt:
+          - UserInterface
+          - Outputs.ApplicationSite
+    Metadata:
+      SamResourceId: Cognito
+  UserInterface:
+    Type: AWS::Serverless::Application
+    Properties:
+      Location: https://s3.ap-southeast-2.amazonaws.com/aws-sam-cli-managed-dev-pipeline-r-artifactsbucket-sqvgljkyuxsp/33a3319af68422dddba8a45199600b35.template
+    Metadata:
+      SamResourceId: UserInterface
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: s3://aws-sam-cli-managed-dev-pipeline-r-artifactsbucket-sqvgljkyuxsp/dfb99254bab5ae8ab6841d82eb92ea9f
+      Description: Hello World function
+      Architectures:
+      - x86_64
+      Tracing: Active
+      Events:
+        HelloPath:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: GET
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: PowertoolsHelloWorld
+          POWERTOOLS_METRICS_NAMESPACE: Powertools
+          LOG_LEVEL: INFO
+      Tags:
+        LambdaPowertools: python
+    Metadata:
+      SamResourceId: HelloWorldFunction
+  ApplicationResourceGroup:
+    Type: AWS::ResourceGroups::Group
+    Properties:
+      Name:
+        Fn::Sub: ApplicationInsights-SAM-${AWS::StackName}
+      ResourceQuery:
+        Type: CLOUDFORMATION_STACK_1_0
+    Metadata:
+      SamResourceId: ApplicationResourceGroup
+  ApplicationInsightsMonitoring:
+    Type: AWS::ApplicationInsights::Application
+    Properties:
+      ResourceGroupName:
+        Ref: ApplicationResourceGroup
+      AutoConfigurationEnabled: 'true'
+    Metadata:
+      SamResourceId: ApplicationInsightsMonitoring
+Outputs:
+  HelloWorldApi:
+    Description: API Gateway endpoint URL for Prod environment for Hello World Function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello
+  HelloWorldFunction:
+    Description: Hello World Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - HelloWorldFunction
+      - Arn
