@@ -147,7 +147,7 @@ jobs:
         run: sam build --template ${SAM_TEMPLATE} --use-container
 
       - name: Run deployment script to copy the web apps to the s3 buckets and update the cloudfront distributions
-        run: ./deployment.sh
+        run: bash deployment.sh
 
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
