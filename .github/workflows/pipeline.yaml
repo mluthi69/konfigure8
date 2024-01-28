@@ -146,11 +146,6 @@ jobs:
       - name: Build IAC resources
         run: sam build --template ${SAM_TEMPLATE} --use-container
 
-      - name: Run deployment script to copy the web apps to the s3 buckets and update the cloudfront distributions
-        run: |
-          aws configure list
-          bash deployment.sh
-
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -225,8 +220,7 @@ jobs:
           use-installer: true
       - uses: actions/download-artifact@v4
         with:
-          name: packaged-testing.yaml
-          
+          name: packaged-testing.yaml          
 
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v4
@@ -236,7 +230,7 @@ jobs:
           role-session-name: testing-deployment
           role-duration-seconds: 3600
           role-skip-session-tagging: true
-
+      
       - name: Deploy to testing account
         run: |
           sam deploy --stack-name ${TESTING_STACK_NAME} \
@@ -246,6 +240,15 @@ jobs:
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
+
+      - name: Run deployment script to copy the web apps to the s3 buckets and update the cloudfront distributions
+        run: |
+          aws configure list
+          bash deployment.sh
+
+      # - name: copy web apps to s3 buckets
+      #   run: |
+      #     aws s3 sync --delete --cache-control no-store ./k8-frontends/admin/build "s3://konfigure8-admin "
 
   deploy-qa:
     if: github.ref == 'refs/heads/main'
