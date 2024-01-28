@@ -35,6 +35,8 @@ Resources:
           Resource: !Sub 'arn:aws:s3:::${AdminAppBucket}/*'
           Principal:
             CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+  
+  #Admin App Site
   AdminAppSite:
     Type: AWS::CloudFront::Distribution
     Properties:
