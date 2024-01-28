@@ -147,7 +147,7 @@ jobs:
         run: sam build --template ${SAM_TEMPLATE} --use-container
 
       - name: Run deployment script to copy the web apps to the s3 buckets and update the cloudfront distributions
-        run: 
+        run: |
           aws configure list
           bash deployment.sh
 
