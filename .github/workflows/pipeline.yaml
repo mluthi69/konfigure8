@@ -122,22 +122,22 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
 
-      # install dependencies for admin webapp
-      - name: run npm install on admin webapp
+      # admin webapp
+      - name: run npm install & build on admin webapp
         working-directory: ./k8-frontends/admin
         run: |
           npm install
           npm run build
 
-      # install dependencies for tenant webapp
-      - name: run npm install on tenant webapp
+      # tenant webapp
+      - name: run npm install & build on tenant webapp
         working-directory: ./k8-frontends/application
         run: |
           npm install
           npm run build
 
-      # install dependencies for landing webapp
-      - name: run npm install on landing webapp
+      # landing webapp
+      - name: run npm install & build on landing webapp
         working-directory: ./k8-frontends/landing
         run: |
           npm install
