@@ -1,29 +1,41 @@
 #!/bin/bash -e
 
 REGION='ap-southeast-2'
-
+echo "Region: $REGION"
 ADMIN_SITE_URL=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='AdminAppSite'].OutputValue" --output text)
+echo "Admin site URL: $ADMIN_SITE_URL"
 ADMIN_SITE_BUCKET=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='AdminBucket'].OutputValue" --output text)
+echo "Admin site bucket: $ADMIN_SITE_BUCKET"
 
 APP_SITE_URL=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='ApplicationSite'].OutputValue" --output text)
+echo "Application site URL: $APP_SITE_URL"
 APP_SITE_BUCKET=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='AppBucket'].OutputValue" --output text)
+echo "Application site bucket: $APP_SITE_BUCKET"
 
 LANDING_APP_SITE_URL=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='LandingApplicationSite'].OutputValue" --output text)
+echo "Landing application site URL: $LANDING_APP_SITE_URL"
 LANDING_APP_SITE_BUCKET=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='LandingAppBucket'].OutputValue" --output text)
+echo "Landing application site bucket: $LANDING_APP_SITE_BUCKET"
 
 ADMIN_APPCLIENTID=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='CognitoUserPoolClientId'].OutputValue" --output text)
+echo "Admin App Client ID: $ADMIN_APPCLIENTID"
 ADMIN_USERPOOLID=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='CognitoUserPoolId'].OutputValue" --output text)
+echo "Admin User Pool ID: $ADMIN_USERPOOLID"
+
 #ADMIN_APIGATEWAYURL=$(aws cloudformation describe-stacks --region ap-southeast-2 --query "Stacks[].Outputs[?OutputKey=='????'].OutputValue" --output text)
 ADMIN_APIGATEWAYURL='xyz.com'
+echo  "Admin API Gateway URL: $ADMIN_APIGATEWAYURL"
 
 # Configuring admin UI
 echo "aws s3 ls s3://${ADMIN_SITE_BUCKET}"
 if ! aws s3 ls "s3://${ADMIN_SITE_BUCKET}"; then
   echo "Error! S3 Bucket: $ADMIN_SITE_BUCKET not readable"
   exit 1
+else
+  echo "S3 Bucket Check: $ADMIN_SITE_BUCKET is readable"
 fi
 
-cd ../
+#cd ../
 
 CURRENT_DIR=$(pwd)
 echo "Current Dir: $CURRENT_DIR"
