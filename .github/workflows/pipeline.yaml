@@ -122,12 +122,28 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v3
 
-      # install dependencies for k8-frontend
-      - name: run npm install on admin frontend
+      # install dependencies for admin webapp
+      - name: run npm install on admin webapp
         working-directory: ./k8-frontends/admin
-        run: npm install
+        run: |
+          npm install
+          npm run build
 
-      - name: Build resources
+      # install dependencies for tenant webapp
+      - name: run npm install on tenant webapp
+        working-directory: ./k8-frontends/application
+        run: |
+          npm install
+          npm run build
+
+      # install dependencies for landing webapp
+      - name: run npm install on landing webapp
+        working-directory: ./k8-frontends/landing
+        run: |
+          npm install
+          npm run build
+
+      - name: Build IAC resources
         run: sam build --template ${SAM_TEMPLATE} --use-container
 
       - name: Assume the testing pipeline user role
