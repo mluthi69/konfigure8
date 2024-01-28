@@ -70,7 +70,9 @@ Resources:
         SystemAdminRoleNameParameter: !Ref SystemAdminRoleNameParameter
         ApiKeyOperationUsersParameter: !Ref ApiKeyOperationUsersParameter
         #AdminUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.AdminAppSite
-        #TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite }
+        #TenantUserPoolCallbackURLParameter: !GetAtt UserInterface.Outputs.ApplicationSite
+        AdminUserPoolCallbackURLParameter: "https://localhost:3000/admin"
+        TenantUserPoolCallbackURLParameter: "https://localhost:3000/admin"
 
   HelloWorldFunction:
     Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
