@@ -241,7 +241,16 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
 
-      - name: Run deployment script to copy the web apps to the s3 buckets and update the cloudfront distributions
+      - name: Assume the testing cloudformation execution role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.TESTING_REGION }}
+          role-to-assume: ${{ env.TESTING_CLOUDFORMATION_EXECUTION_ROLE }}
+          role-session-name: testing-ui-deployment
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: DEV - Run deployment script to copy the web apps to the s3 buckets and update the cloudfront distributions
         run: |
           aws configure list
           bash deployment.sh
