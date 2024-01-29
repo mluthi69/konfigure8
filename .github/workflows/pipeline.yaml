@@ -255,10 +255,6 @@ jobs:
           aws configure list
           bash deployment.sh
 
-      # - name: copy web apps to s3 buckets
-      #   run: |
-      #     aws s3 sync --delete --cache-control no-store ./k8-frontends/admin/build "s3://konfigure8-admin "
-
   deploy-qa:
     if: github.ref == 'refs/heads/main'
     needs: [build-and-package]
@@ -290,6 +286,20 @@ jobs:
             --s3-bucket ${QA_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
             --role-arn ${QA_CLOUDFORMATION_EXECUTION_ROLE}
+
+      - name: Assume the QA cloudformation execution role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.QA_REGION }}
+          role-to-assume: ${{ env.QA_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: qa-ui-deployment
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: QA - Run deployment script to copy the web apps to the s3 buckets and update the cloudfront distributions
+        run: |
+          aws configure list
+          bash deployment.sh
 
   integration-test:
     if: github.ref == 'refs/heads/main'
@@ -334,3 +344,17 @@ jobs:
             --s3-bucket ${PROD_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
             --role-arn ${PROD_CLOUDFORMATION_EXECUTION_ROLE}
+
+      - name: Assume the PROD pipeline execution role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.PROD_REGION }}
+          role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: prod-ui-deployment
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
+      - name: PROD - Run deployment script to copy the web apps to the s3 buckets and update the cloudfront distributions
+        run: |
+          aws configure list
+          bash deployment.sh
