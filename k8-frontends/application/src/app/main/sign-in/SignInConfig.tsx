@@ -1,5 +1,6 @@
 import { FuseRouteConfigType } from '@fuse/utils/FuseUtils';
-import SignInPage from './SignInPage';
+//import SignInPage from './SignInPage';
+import ModernSignInPage from './ModernSignInPage';
 import authRoles from '../../auth/authRoles';
 
 const SignInConfig: FuseRouteConfigType = {
@@ -28,7 +29,7 @@ const SignInConfig: FuseRouteConfigType = {
 	routes: [
 		{
 			path: 'sign-in',
-			element: <SignInPage />
+			element: <ModernSignInPage />
 		}
 	]
 };
