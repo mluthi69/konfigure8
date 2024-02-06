@@ -1,52 +1,91 @@
+import React, { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { Link } from 'react-router-dom';
+import _ from '@lodash';
+import Paper from '@mui/material/Paper';
+import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
+import { useAuth } from 'src/app/auth/AuthRouteProvider';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import { useState } from 'react';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import CardContent from '@mui/material/CardContent';
-import _ from '@lodash';
-import Alert from '@mui/material/Alert';
-import Button from '@mui/material/Button';
-import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import JwtLoginTab from './tabs/JwtSignInTab';
-import FirebaseSignInTab from './tabs/FirebaseSignInTab';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { set } from 'lodash';
 
-const tabs = [
-	{
-		id: 'jwt',
-		title: 'JWT',
-		logo: 'assets/images/logo/jwt.svg',
-		logoClass: 'h-40 p-4 bg-black rounded-12'
-	},
-	{
-		id: 'firebase',
-		title: 'Firebase',
-		logo: 'assets/images/logo/firebase.svg',
-		logoClass: 'h-40'
-	}
-];
+const signInFormValidationSchema = z.object({
+	email: z.string().email('You must enter a valid email').nonempty('You must enter an email'),
+	password: z
+		.string()
+		.min(8, 'Password is too short - must be at least 8 chars.')
+		.nonempty('Please enter your password.')
+});
 
-/**
- * The sign in page.
- */
-function SignInPage() {
-	const [selectedTabId, setSelectedTabId] = useState(tabs[0].id);
+type SignInFormType = {
+	email: string;
+	password: string;
+	remember?: boolean;
+};
 
-	function handleSelectTab(id: string) {
-		setSelectedTabId(id);
-	}
+const defaultValues = {
+	email: '',
+	password: '',
+	remember: true
+};
+
+const signInFormDefaultValues = {
+	email: '',
+	password: '',
+	remember: true
+};
+
+const resetFormValidationSchema = z.object({
+    password: z
+        .string()
+        .min(8, 'Password is too short - must be at least 8 chars.')
+        .nonempty('Please enter your password.'),
+    confirmPassword: z
+        .string()
+        .min(8, 'Password is too short - must be at least 8 chars.')
+        .nonempty('Please enter your password.')
+}).refine(data => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword']
+});
+
+type ResetFormType = {
+	password: string,
+	confirmPassword: string
+}
+
+// LoginForm component
+const LoginForm: React.FC<{ onLogin: (data: SignInFormType) => void}> = ({onLogin}) => {
+	const { control, handleSubmit, setValue, formState} = useForm<SignInFormType>({
+		resolver: zodResolver(signInFormValidationSchema),
+		mode: 'onChange',
+		defaultValues: signInFormDefaultValues
+	});
+
+	const { isValid, dirtyFields, errors } = formState;
+
+	useEffect(() => {
+		setValue('email', 'admin@fusetheme.com', { shouldDirty: true, shouldValidate: true });
+		setValue('password', 'Il2lpadl$123', { shouldDirty: true, shouldValidate: true });
+	}, [setValue]);
 
 	return (
-		<div className="flex min-w-0 flex-1 flex-col items-center sm:flex-row sm:justify-center md:items-start md:justify-start">
-			<Paper className="h-full w-full px-16 py-8 ltr:border-r-1 rtl:border-l-1 sm:h-auto sm:w-auto sm:rounded-2xl sm:p-48 sm:shadow md:flex md:h-full md:w-1/2 md:items-center md:justify-end md:rounded-none md:p-64 md:shadow-none">
-				<CardContent className="mx-auto w-full max-w-320 sm:mx-0 sm:w-320">
+		<div className="flex min-w-0 flex-auto flex-col items-center sm:justify-center md:p-32">
+		<Paper className="flex min-h-full w-full overflow-hidden rounded-0 sm:min-h-auto sm:w-auto sm:rounded-2xl sm:shadow md:w-full md:max-w-6xl">
+			<div className="w-full px-16 py-32 ltr:border-r-1 rtl:border-l-1 sm:w-auto sm:p-48 md:p-64">
+				<div className="mx-auto w-full max-w-320 sm:mx-0 sm:w-320">
 					<img
 						className="w-48"
-						src="assets/images/logo/logo.svg"
+						src="assets/images/logo/konfigure8.png"
 						alt="logo"
 					/>
 
@@ -63,89 +102,137 @@ function SignInPage() {
 						</Link>
 					</div>
 
-					<Alert
-						icon={false}
-						severity="info"
-						className="mt-24 px-16 text-13 leading-relaxed"
+					<form
+						name="loginForm"
+						noValidate
+						className="mt-32 flex w-full flex-col justify-center"
+						onSubmit={handleSubmit(onLogin)}
 					>
-						You are browsing <b>Fuse React Demo</b>. Click on the "Sign in" button to access the Demo and
-						Documentation.
-					</Alert>
+						<Controller
+							name="email"
+							control={control}
+							render={({ field }) => (
+								<TextField
+									{...field}
+									className="mb-24"
+									label="Email"
+									autoFocus
+									type="email"
+									error={!!errors.email}
+									helperText={errors?.email?.message}
+									variant="outlined"
+									required
+									fullWidth
+								/>
+							)}
+						/>
 
-					<Tabs
-						value={_.findIndex(tabs, { id: selectedTabId })}
-						variant="fullWidth"
-						className="w-full mt-24 mb-32"
-						indicatorColor="secondary"
-					>
-						{tabs.map((item) => (
-							<Tab
-								onClick={() => handleSelectTab(item.id)}
-								key={item.id}
-								icon={
-									<img
-										className={item.logoClass}
-										src={item.logo}
-										alt={item.title}
-									/>
-								}
-								className="min-w-0"
-								label={item.title}
+						<Controller
+							name="password"
+							control={control}
+							render={({ field }) => (
+								<TextField
+									{...field}
+									className="mb-24"
+									label="Password"
+									type="password"
+									error={!!errors.password}
+									helperText={errors?.password?.message}
+									variant="outlined"
+									required
+									fullWidth
+								/>
+							)}
+						/>
+
+						<div className="flex flex-col items-center justify-center sm:flex-row sm:justify-between">
+							<Controller
+								name="remember"
+								control={control}
+								render={({ field }) => (
+									<FormControl>
+										<FormControlLabel
+											label="Remember me"
+											control={
+												<Checkbox
+													size="small"
+													{...field}
+												/>
+											}
+										/>
+									</FormControl>
+								)}
 							/>
-						))}
-					</Tabs>
 
-					{selectedTabId === 'jwt' && <JwtLoginTab />}
-					{selectedTabId === 'firebase' && <FirebaseSignInTab />}
+							<Link
+								className="text-md font-medium"
+								to="/pages/auth/forgot-password"
+							>
+								Forgot password?
+							</Link>
+						</div>
 
-					<div className="mt-32 flex items-center">
-						<div className="mt-px flex-auto border-t" />
-						<Typography
-							className="mx-8"
-							color="text.secondary"
+						<Button
+							variant="contained"
+							color="secondary"
+							className=" mt-16 w-full"
+							aria-label="Sign in"
+							disabled={_.isEmpty(dirtyFields) || !isValid}
+							type="submit"
+							size="large"
 						>
-							Or continue with
-						</Typography>
-						<div className="mt-px flex-auto border-t" />
-					</div>
+							Sign in
+						</Button>
 
-					<div className="mt-32 flex items-center space-x-16">
-						<Button
-							variant="outlined"
-							className="flex-auto"
-						>
-							<FuseSvgIcon
-								size={20}
-								color="action"
+						{/* <div className="mt-32 flex items-center">
+							<div className="mt-px flex-auto border-t" />
+							<Typography
+								className="mx-8"
+								color="text.secondary"
 							>
-								feather:facebook
-							</FuseSvgIcon>
-						</Button>
-						<Button
-							variant="outlined"
-							className="flex-auto"
-						>
-							<FuseSvgIcon
-								size={20}
-								color="action"
+								Or continue with
+							</Typography>
+							<div className="mt-px flex-auto border-t" />
+						</div>
+
+						<div className="mt-32 flex items-center space-x-16">
+							<Button
+								variant="outlined"
+								className="flex-auto"
 							>
-								feather:twitter
-							</FuseSvgIcon>
-						</Button>
-						<Button
-							variant="outlined"
-							className="flex-auto"
-						>
-							<FuseSvgIcon
-								size={20}
-								color="action"
+								<FuseSvgIcon
+									size={20}
+									color="action"
+								>
+									feather:facebook
+								</FuseSvgIcon>
+							</Button>
+							<Button
+								variant="outlined"
+								className="flex-auto"
 							>
-								feather:github
-							</FuseSvgIcon>
-						</Button>
-					</div>
-				</CardContent>
-			</Paper>
+								<FuseSvgIcon
+									size={20}
+									color="action"
+								>
+									feather:twitter
+								</FuseSvgIcon>
+							</Button>
+							<Button
+								variant="outlined"
+								className="flex-auto"
+							>
+								<FuseSvgIcon
+									size={20}
+									color="action"
+								>
+									feather:github
+								</FuseSvgIcon>
+							</Button>
+						</div> */}
+					</form>
+				</div>
+			</div>
 
 			<Box
 				className="relative hidden h-full flex-auto items-center justify-center overflow-hidden p-64 md:flex lg:px-112"
@@ -215,12 +302,11 @@ function SignInPage() {
 
 				<div className="relative z-10 w-full max-w-2xl">
 					<div className="text-7xl font-bold leading-none text-gray-100">
-						<div>Welcome to</div>
-						<div>our community</div>
+						<div>Welcome Konfigure8 Admin</div>
 					</div>
 					<div className="mt-24 text-lg leading-6 tracking-tight text-gray-400">
-						Fuse helps developers to build organized and well coded dashboards full of beautiful and rich
-						modules. Join us and start building your application today.
+						Konfigure8 helps developers build amazing no-code business applications and automations. 
+						Join us and start building your application today.
 					</div>
 					<div className="mt-32 flex items-center">
 						<AvatarGroup
@@ -242,8 +328,277 @@ function SignInPage() {
 					</div>
 				</div>
 			</Box>
+		</Paper>
+	</div>
+	);
+};
+
+// PasswordResetForm component
+const PasswordResetForm: React.FC<{ onReset: (data: ResetFormType) => void }> = ({ onReset }) => {
+	const { control, handleSubmit, formState} = useForm<ResetFormType>({
+		mode: 'onChange',
+		resolver: zodResolver(resetFormValidationSchema),
+	});
+
+	const { isValid, dirtyFields, errors } = formState;
+
+	return (
+		<div className="flex min-w-0 flex-auto flex-col items-center sm:justify-center md:p-32">
+			<Paper className="flex min-h-full w-full overflow-hidden rounded-0 sm:min-h-auto sm:w-auto sm:rounded-2xl sm:shadow md:w-full md:max-w-6xl">
+				<div className="w-full px-16 py-32 ltr:border-r-1 rtl:border-l-1 sm:w-auto sm:p-48 md:p-64">
+					<div className="mx-auto w-full max-w-320 sm:mx-0 sm:w-320">
+						<img
+							className="w-48"
+							src="assets/images/logo/logo.svg"
+							alt="logo"
+						/>
+
+						<Typography className="mt-32 text-4xl font-extrabold leading-tight tracking-tight">
+							Reset your password
+						</Typography>
+						<Typography className="font-medium">Create a new password for your account</Typography>
+
+						<form
+							name="registerForm"
+							noValidate
+							className="mt-32 flex w-full flex-col justify-center"
+							onSubmit={handleSubmit(onReset)}
+						>
+							<Controller
+								name="password"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										className="mb-24"
+										label="Password"
+										type="password"
+										error={!!errors.password}
+										helperText={errors?.password?.message}
+										variant="outlined"
+										required
+										fullWidth
+									/>
+								)}
+							/>
+
+							<Controller
+								name="confirmPassword"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										className="mb-24"
+										label="Password (Confirm)"
+										type="password"
+										error={!!errors.confirmPassword}
+										helperText={errors?.confirmPassword?.message}
+										variant="outlined"
+										required
+										fullWidth
+									/>
+								)}
+							/>
+
+							<Button
+								variant="contained"
+								color="secondary"
+								className=" mt-4 w-full"
+								aria-label="Register"
+								disabled={_.isEmpty(dirtyFields) || !isValid}
+								type="submit"
+								size="large"
+							>
+								Reset your password
+							</Button>
+
+							<Typography
+								className="mt-32 text-md font-medium"
+								color="text.secondary"
+							>
+								<span>Return to</span>
+								<Link
+									className="ml-4"
+									to="/sign-in"
+								>
+									sign in
+								</Link>
+							</Typography>
+						</form>
+					</div>
+				</div>
+
+				<Box
+					className="relative hidden h-full flex-auto items-center justify-center overflow-hidden p-64 md:flex lg:px-112"
+					sx={{ backgroundColor: 'primary.main' }}
+				>
+					<svg
+						className="pointer-events-none absolute inset-0"
+						viewBox="0 0 960 540"
+						width="100%"
+						height="100%"
+						preserveAspectRatio="xMidYMax slice"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<Box
+							component="g"
+							sx={{ color: 'primary.light' }}
+							className="opacity-20"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="100"
+						>
+							<circle
+								r="234"
+								cx="196"
+								cy="23"
+							/>
+							<circle
+								r="234"
+								cx="790"
+								cy="491"
+							/>
+						</Box>
+					</svg>
+					<Box
+						component="svg"
+						className="absolute -right-64 -top-64 opacity-20"
+						sx={{ color: 'primary.light' }}
+						viewBox="0 0 220 192"
+						width="220px"
+						height="192px"
+						fill="none"
+					>
+						<defs>
+							<pattern
+								id="837c3e70-6c3a-44e6-8854-cc48c737b659"
+								x="0"
+								y="0"
+								width="20"
+								height="20"
+								patternUnits="userSpaceOnUse"
+							>
+								<rect
+									x="0"
+									y="0"
+									width="4"
+									height="4"
+									fill="currentColor"
+								/>
+							</pattern>
+						</defs>
+						<rect
+							width="220"
+							height="192"
+							fill="url(#837c3e70-6c3a-44e6-8854-cc48c737b659)"
+						/>
+					</Box>
+
+					<div className="relative z-10 w-full max-w-2xl">
+						<div className="text-7xl font-bold leading-none text-gray-100">
+							<div>Welcome to</div>
+							<div>our community</div>
+						</div>
+						<div className="mt-24 text-lg leading-6 tracking-tight text-gray-400">
+							Fuse helps developers to build organized and well coded dashboards full of beautiful and
+							rich modules. Join us and start building your application today.
+						</div>
+						<div className="mt-32 flex items-center">
+							<AvatarGroup
+								sx={{
+									'& .MuiAvatar-root': {
+										borderColor: 'primary.main'
+									}
+								}}
+							>
+								<Avatar src="assets/images/avatars/female-18.jpg" />
+								<Avatar src="assets/images/avatars/female-11.jpg" />
+								<Avatar src="assets/images/avatars/male-09.jpg" />
+								<Avatar src="assets/images/avatars/male-16.jpg" />
+							</AvatarGroup>
+
+							<div className="ml-16 font-medium tracking-tight text-gray-400">
+								More than 17k people joined us, it's your turn
+							</div>
+						</div>
+					</div>
+				</Box>
+			</Paper>
 		</div>
 	);
-}
+};
 
-export default SignInPage;
+// SignInPage component
+const SignInPage: React.FC = () => {
+
+	const { cognitoService } = useAuth();
+
+	const [passwordResetError, setPasswordResetError] = useState(null);
+	const [isResettingPassword, setIsResettingPassword] = useState(false);
+  
+	const handleLogin = (data: SignInFormType) => {
+
+		const { email, password } = data;
+
+		cognitoService
+			.signIn({
+				email,
+				password
+			})
+			.catch((error) => {
+				if (error.newPasswordRequired) {
+					console.log('error!!!', error)	
+					setPasswordResetError(error);
+          			setIsResettingPassword(true);							
+				} else {
+					// TODO: handle other errors
+					console.log('another error!!!', error)
+				}
+			});
+	};
+  
+	const handlePasswordReset = (data: ResetFormType) => {
+	  // Perform password reset logic here
+
+	  const newPassword = data.confirmPassword;
+	  console.log('in handlePasswordReset with confirm password: ', newPassword)
+	  // After successful password reset:
+	  //cognitoUser.completeNewPasswordChallenge(newPassword, sessionUserAttributes);
+
+	  const updatePasswordPayload = {...passwordResetError, confirmPassword: data.confirmPassword};
+
+	  //add confirm password to the passwordResetError object as an additional attribute using useState
+	  setPasswordResetError(updatePasswordPayload);
+
+
+	  console.log('in handlePasswordReset with confirm password::', passwordResetError)
+
+	  cognitoService
+			.completePasswordChallenge({
+				updatePasswordPayload
+			})
+			.catch((error) => {
+				if (error.newPasswordRequired) {
+					console.log('error!!!', error)	
+					setPasswordResetError(error);
+          			setIsResettingPassword(true);							
+				} else {
+					// TODO: handle other errors
+					console.log('another error!!!', error)
+					setIsResettingPassword(false);
+				}
+			});	  
+	};
+  
+	return (
+	  <div>
+		{isResettingPassword ? (
+		  <PasswordResetForm onReset={handlePasswordReset} />
+		) : (
+		  <LoginForm onLogin={handleLogin} />
+		)}
+	  </div>
+	);
+  };
+  
+  export default SignInPage;

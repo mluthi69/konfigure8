@@ -1,48 +1,64 @@
 import { Controller, useForm } from 'react-hook-form';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { Link } from 'react-router-dom';
 import _ from '@lodash';
 import Paper from '@mui/material/Paper';
-import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import AvatarGroup from '@mui/material/AvatarGroup';
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { CognitoUserPool, CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js';
 
 /**
  * Form Validation Schema
  */
-const schema = z.object({
-	email: z.string().email('You must enter a valid email').nonempty('You must enter an email'),
-	password: z
-		.string()
-		.min(8, 'Password is too short - must be at least 8 chars.')
-		.nonempty('Please enter your password.')
-});
-
-type FormType = {
-	email: string;
-	password: string;
-	remember?: boolean;
-};
+const schema = z
+	.object({
+		password: z
+			.string()
+			.nonempty('Please enter your password.')
+			.min(8, 'Password is too short - should be 8 chars minimum.'),
+		passwordConfirm: z.string().nonempty('Password confirmation is required')
+	})
+	.refine((data) => data.password === data.passwordConfirm, {
+		message: 'Passwords must match',
+		path: ['passwordConfirm']
+	});
 
 const defaultValues = {
-	email: '',
 	password: '',
-	remember: true
+	passwordConfirm: ''
 };
 
 /**
- * The full screen reversed sign in page.
+ * The modern reset password page.
  */
-function ModernSignInPage() {
-	const { control, formState, handleSubmit, reset } = useForm<FormType>({
+function ResetPasswordPage() {
+
+	const location = useLocation();
+    const { error } = location.state || {};
+
+	type FormType = {
+		passwordConfirm: string;
+		password: string;
+	};
+
+	const cognitoUser = error.cognitoUser;
+
+	useEffect(() => {
+        if (error && error.newPasswordRequired) {
+            // Handle the error here
+            console.log('newPasswordRequired error:', error);
+        }
+    }, [error]);
+
+
+	const { control, formState, handleSubmit, reset } = useForm({
 		mode: 'onChange',
 		defaultValues,
 		resolver: zodResolver(schema)
@@ -50,8 +66,18 @@ function ModernSignInPage() {
 
 	const { isValid, dirtyFields, errors } = formState;
 
-	function onSubmit() {
-		reset(defaultValues);
+	function onSubmit(formData: FormType) {
+
+		const { passwordConfirm, password } = formData;
+
+		cognitoUser.completeNewPasswordChallenge(passwordConfirm, error.userAttributes, {
+			onSuccess: (result) => {
+				console.log('Password change successful:', result);
+			},
+			onFailure: (error) => {
+				console.error('Password change failed:', error);
+			}
+		});
 	}
 
 	return (
@@ -61,48 +87,21 @@ function ModernSignInPage() {
 					<div className="mx-auto w-full max-w-320 sm:mx-0 sm:w-320">
 						<img
 							className="w-48"
-							src="assets/images/logo/konfigure8.png"
+							src="assets/images/logo/logo.svg"
 							alt="logo"
 						/>
 
 						<Typography className="mt-32 text-4xl font-extrabold leading-tight tracking-tight">
-							Sign in
+							Reset your password
 						</Typography>
-						<div className="mt-2 flex items-baseline font-medium">
-							<Typography>Don't have an account?</Typography>
-							<Link
-								className="ml-4"
-								to="/sign-up"
-							>
-								Sign up
-							</Link>
-						</div>
+						<Typography className="font-medium">Create a new password for your account</Typography>
 
 						<form
-							name="loginForm"
+							name="registerForm"
 							noValidate
 							className="mt-32 flex w-full flex-col justify-center"
 							onSubmit={handleSubmit(onSubmit)}
 						>
-							<Controller
-								name="email"
-								control={control}
-								render={({ field }) => (
-									<TextField
-										{...field}
-										className="mb-24"
-										label="Email"
-										autoFocus
-										type="email"
-										error={!!errors.email}
-										helperText={errors?.email?.message}
-										variant="outlined"
-										required
-										fullWidth
-									/>
-								)}
-							/>
-
 							<Controller
 								name="password"
 								control={control}
@@ -121,91 +120,48 @@ function ModernSignInPage() {
 								)}
 							/>
 
-							<div className="flex flex-col items-center justify-center sm:flex-row sm:justify-between">
-								<Controller
-									name="remember"
-									control={control}
-									render={({ field }) => (
-										<FormControl>
-											<FormControlLabel
-												label="Remember me"
-												control={
-													<Checkbox
-														size="small"
-														{...field}
-													/>
-												}
-											/>
-										</FormControl>
-									)}
-								/>
-
-								<Link
-									className="text-md font-medium"
-									to="/pages/auth/forgot-password"
-								>
-									Forgot password?
-								</Link>
-							</div>
+							<Controller
+								name="passwordConfirm"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										className="mb-24"
+										label="Password (Confirm)"
+										type="password"
+										error={!!errors.passwordConfirm}
+										helperText={errors?.passwordConfirm?.message}
+										variant="outlined"
+										required
+										fullWidth
+									/>
+								)}
+							/>
 
 							<Button
 								variant="contained"
 								color="secondary"
-								className=" mt-16 w-full"
-								aria-label="Sign in"
+								className=" mt-4 w-full"
+								aria-label="Register"
 								disabled={_.isEmpty(dirtyFields) || !isValid}
 								type="submit"
 								size="large"
 							>
-								Sign in
+								Reset your password
 							</Button>
 
-							{/* <div className="mt-32 flex items-center">
-								<div className="mt-px flex-auto border-t" />
-								<Typography
-									className="mx-8"
-									color="text.secondary"
+							<Typography
+								className="mt-32 text-md font-medium"
+								color="text.secondary"
+							>
+								<span>Return to</span>
+								<Link
+									className="ml-4"
+									to="/sign-in"
 								>
-									Or continue with
-								</Typography>
-								<div className="mt-px flex-auto border-t" />
-							</div>
-
-							<div className="mt-32 flex items-center space-x-16">
-								<Button
-									variant="outlined"
-									className="flex-auto"
-								>
-									<FuseSvgIcon
-										size={20}
-										color="action"
-									>
-										feather:facebook
-									</FuseSvgIcon>
-								</Button>
-								<Button
-									variant="outlined"
-									className="flex-auto"
-								>
-									<FuseSvgIcon
-										size={20}
-										color="action"
-									>
-										feather:twitter
-									</FuseSvgIcon>
-								</Button>
-								<Button
-									variant="outlined"
-									className="flex-auto"
-								>
-									<FuseSvgIcon
-										size={20}
-										color="action"
-									>
-										feather:github
-									</FuseSvgIcon>
-								</Button>
-							</div> */}
+									sign in
+								</Link>
+							</Typography>
 						</form>
 					</div>
 				</div>
@@ -278,11 +234,12 @@ function ModernSignInPage() {
 
 					<div className="relative z-10 w-full max-w-2xl">
 						<div className="text-7xl font-bold leading-none text-gray-100">
-							<div>Welcome Konfigure8 Admin</div>
+							<div>Welcome to</div>
+							<div>our community</div>
 						</div>
 						<div className="mt-24 text-lg leading-6 tracking-tight text-gray-400">
-							Konfigure8 helps developers build amazing no-code business applications and automations. 
-							Join us and start building your application today.
+							Fuse helps developers to build organized and well coded dashboards full of beautiful and
+							rich modules. Join us and start building your application today.
 						</div>
 						<div className="mt-32 flex items-center">
 							<AvatarGroup
@@ -309,4 +266,4 @@ function ModernSignInPage() {
 	);
 }
 
-export default ModernSignInPage;
+export default ResetPasswordPage;

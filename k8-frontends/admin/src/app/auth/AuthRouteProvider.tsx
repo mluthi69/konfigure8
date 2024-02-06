@@ -12,18 +12,12 @@ import {
 } from 'src/app/auth/user/store/userSlice';
 import BrowserRouter from '@fuse/core/BrowserRouter';
 import { PartialDeep } from 'type-fest';
-import firebase from 'firebase/compat/app';
 import _ from '@lodash';
 import { useSelector } from 'react-redux';
 import withReducer from 'app/store/withReducer';
 import useJwtAuth, { JwtAuth } from './services/jwt/useJwtAuth';
+import useCognitoAuth, {CognitoAuth} from './services/cognito/useCognitoAuth';
 import { User } from './user';
-import useFirebaseAuth from './services/firebase/useFirebaseAuth';
-import UserModel from './user/models/UserModel';
-
-/**
- * Initialize Firebase
- */
 
 export type SignInPayload = {
 	email: string;
@@ -38,7 +32,8 @@ export type SignUpPayload = {
 
 type AuthContext = {
 	jwtService?: JwtAuth<User, SignInPayload, SignUpPayload>;
-	firebaseService?: ReturnType<typeof useFirebaseAuth>;
+	cognitoService?: CognitoAuth<User, SignInPayload, SignUpPayload>;
+	//firebaseService?: ReturnType<typeof useFirebaseAuth>;
 	signOut?: () => void;
 	updateUser?: (U: PartialDeep<User>) => void;
 	isAuthenticated: boolean;
@@ -54,14 +49,12 @@ function AuthRoute(props: AuthProviderProps) {
 	const { children } = props;
 	const dispatch = useAppDispatch();
 	const user = useSelector(selectUser);
+	
 	/**
 	 * Get user role from store
 	 */
 	const userRole = useSelector(selectUserRole);
 
-	/**
-	 * Jwt auth service
-	 */
 	const jwtService = useJwtAuth({
 		config: {
 			tokenStorageKey: 'jwt_access_token',
@@ -93,36 +86,14 @@ function AuthRoute(props: AuthProviderProps) {
 		}
 	});
 
-	/**
-	 * Firebase auth service
-	 */
-	const firebaseService: AuthContext['firebaseService'] = useFirebaseAuth<User>({
-		onSignedIn: (_user) => {
-			firebase
-				.database()
-				.ref(`users/${_user.uid}`)
-				.once('value')
-				.then((snapshot) => {
-					const user = snapshot.val() as User;
-					dispatch(setUser(user));
-					setAuthService('firebase');
-				});
+	const cognitoService = useCognitoAuth({
+		onSignedIn: (user: User) => {
+			dispatch(setUser(user));
+			setAuthService('cognito');
 		},
-		onSignedUp: (userCredential, displayName) => {
-			const _user = userCredential.user;
-
-			const user = UserModel({
-				uid: _user.uid,
-				role: ['admin'],
-				data: {
-					displayName,
-					email: _user.email
-				}
-			});
-
-			firebaseService.updateUser(user);
-
-			setAuthService('firebase');
+		onSignedUp: (user: User) => {
+			dispatch(setUser(user));
+			setAuthService('cognito');
 		},
 		onSignedOut: () => {
 			dispatch(resetUser());
@@ -133,33 +104,24 @@ function AuthRoute(props: AuthProviderProps) {
 		},
 		onError: (error) => {
 			// eslint-disable-next-line no-console
-			console.warn(error);
+			console.log(error);
 		}
 	});
 
-	/**
-	 * Check if services is in loading state
-	 */
 	const isLoading = useMemo(
-		() => jwtService?.isLoading || firebaseService?.isLoading,
-		[jwtService?.isLoading, firebaseService?.isLoading]
+		() => jwtService?.isLoading || cognitoService?.isLoading,
+		[jwtService?.isLoading, cognitoService?.isLoading]
 	);
 
-	/**
-	 * Check if user is authenticated
-	 */
 	const isAuthenticated = useMemo(
-		() => jwtService?.isAuthenticated || firebaseService?.isAuthenticated,
-		[jwtService?.isAuthenticated, firebaseService?.isAuthenticated]
+		() => jwtService?.isAuthenticated || cognitoService?.isAuthenticated,
+		[jwtService?.isAuthenticated, cognitoService?.isAuthenticated]
 	);
 
-	/**
-	 * Combine auth services
-	 */
 	const combinedAuth = useMemo<AuthContext>(
 		() => ({
 			jwtService,
-			firebaseService,
+			cognitoService,
 			signOut: () => {
 				const authService = getAuthService();
 
@@ -167,8 +129,8 @@ function AuthRoute(props: AuthProviderProps) {
 					return jwtService?.signOut();
 				}
 
-				if (authService === 'firebase') {
-					return firebaseService?.signOut();
+				if (authService === 'cognito') {
+					return cognitoService?.signOut();
 				}
 
 				return null;
@@ -180,8 +142,8 @@ function AuthRoute(props: AuthProviderProps) {
 					return jwtService?.updateUser(userData);
 				}
 
-				if (authService === 'firebase') {
-					return firebaseService?.updateUser(_.merge({}, user, userData));
+				if(authService === 'cognito') {
+					return cognitoService?.updateUser(userData);
 				}
 
 				return null;
@@ -191,32 +153,20 @@ function AuthRoute(props: AuthProviderProps) {
 		[isAuthenticated, user]
 	);
 
-	/**
-	 * Get auth service
-	 */
 	const getAuthService = useCallback(() => {
 		return localStorage.getItem('authService');
 	}, []);
 
-	/**
-	 * Set auth service
-	 */
 	const setAuthService = useCallback((authService: string) => {
 		if (authService) {
 			localStorage.setItem('authService', authService);
 		}
 	}, []);
 
-	/**
-	 * Reset auth service
-	 */
 	const resetAuthService = useCallback(() => {
 		localStorage.removeItem('authService');
 	}, []);
 
-	/**
-	 * Render loading screen while loading user data
-	 */
 	if (isLoading) {
 		return <FuseSplashScreen />;
 	}
