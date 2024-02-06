@@ -9,7 +9,7 @@ import Tab from '@mui/material/Tab';
 import { useState } from 'react';
 import _ from '../../../@lodash/@lodash';
 import JwtSignUpTab from './tabs/JwSignUpTab';
-import FirebaseSignUpTab from './tabs/FirebaseSignUpTab';
+//import FirebaseSignUpTab from './tabs/FirebaseSignUpTab';
 
 const tabs = [
 	{
@@ -83,7 +83,7 @@ function SignUpPage() {
 					</Tabs>
 
 					{selectedTabId === 'jwt' && <JwtSignUpTab />}
-					{selectedTabId === 'firebase' && <FirebaseSignUpTab />}
+					{selectedTabId === 'firebase' && <JwtSignUpTab />}
 				</div>
 			</Paper>
 
