@@ -29,12 +29,12 @@ export type CognitoAuthProps<T> = {
 	onError?: (error: any) => void;
 };
 
-export type CognitoAuth<User, SignInPayload, SignUpPayload, ConfirmEmailPayload, CogniotUser> = {
+export type CognitoAuth<User, SignInPayload, SignUpPayload> = {
 	user: User;
 	isAuthenticated: boolean;
 	isLoading: boolean;
 	signIn: (U: SignInPayload) => Promise<{ userData: User; accessToken: string }>;
-	completePasswordChallenge: (U: ConfirmEmailPayload) => Promise<{ userData: User; accessToken: string }>;
+	completePasswordChallenge: (U: any) => Promise<{ userData: User; accessToken: string }>;
 	signOut: () => void;
 	signUp: (U: SignUpPayload) => Promise<AxiosResponse<User, AxiosError>>;
 	updateUser: (U: PartialDeep<User>) => void;
@@ -42,9 +42,9 @@ export type CognitoAuth<User, SignInPayload, SignUpPayload, ConfirmEmailPayload,
 	setIsLoading: (isLoading: boolean) => void;
 };
 
-const useCognitoAuth = <User, SignInPayload, SignUpPayload, ConfirmEmailPayload, CogniotUser>(
+const useCognitoAuth = <User, SignInPayload, SignUpPayload>(
 	props: CognitoAuthProps<User>
-): CognitoAuth<User, SignInPayload, SignUpPayload, ConfirmEmailPayload, CogniotUser> => {
+): CognitoAuth<User, SignInPayload, SignUpPayload> => {
 	const { onSignedIn, onSignedOut, onSignedUp, onError, onUpdateUser } = props;
 
 	// Merge default config with the one from the props
@@ -221,7 +221,7 @@ const useCognitoAuth = <User, SignInPayload, SignUpPayload, ConfirmEmailPayload,
 		});
 	};
 
-	const completePasswordChallenge = async (payload: ConfirmEmailPayload) => {
+	const completePasswordChallenge = async (payload: any) => {
 		return new Promise<{ userData: User; accessToken: string; }>((resolve, reject) => {
 
 			//log credentials object to console
